@@ -21,19 +21,22 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-gnu-
           export LOCALVERSION=-android12-9-00016-g7c6bbcca33e1-ab12029497
           
-          # 1. Initialize the config (The || true handles the Kconfig warnings)
-          make vendor/x6833b_defconfig || true
+          # Manually move the config you edited so 'make' doesn't have to search
+          cp arch/arm64/configs/defconfig .config
           
-          # 2. GENERATE MISSING HEADERS (This fixes your Error #4)
+          # Accept defaults for anything not in your defconfig
+          make olddefconfig
+          
+          # Prepare headers to stop the autoconf.h error
           make prepare
           make modules_prepare
           
-          # 3. Build only the loopback module
+          # Target only the sound drivers folder
           make -j$(nproc) M=sound/drivers modules
           
       - name: Organize Artifact
         run: |
-          mkdir output
+          mkdir -p output
           find sound/drivers -name "snd-aloop.ko" -exec cp {} output/ \;
 
       - name: Upload Driver
