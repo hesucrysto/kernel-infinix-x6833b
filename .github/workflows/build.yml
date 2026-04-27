@@ -21,15 +21,14 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-gnu-
           export LOCALVERSION=-android12-9-00016-g7c6bbcca33e1-ab12029497
           
-          # 1. Force the config file into place
+          # Force the config into place manually
           cp arch/arm64/configs/defconfig .config
           
-          # 2. This command creates the missing headers WITHOUT checking the broken Kconfigs
-          make silentoldconfig || true
-          make prepare
-          make modules_prepare
+          # Bypass the broken Kconfig menus by only preparing headers
+          make -j$(nproc) modules_prepare
           
-          # 3. Direct build of the loopback driver, ignoring main kernel errors
+          # Direct compilation of just the ALSA loopback driver
+          # This avoids the broken drivers/scsi folder completely
           make -j$(nproc) M=sound/drivers CONFIG_SND_ALOOP=m modules
           
       - name: Organize Artifact
