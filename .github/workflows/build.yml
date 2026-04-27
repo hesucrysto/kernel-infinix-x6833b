@@ -4,7 +4,7 @@ on:
 
 jobs:
   build:
-    runs-runs-on: ubuntu-22.04
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Source
         uses: actions/checkout@v4
@@ -19,12 +19,13 @@ jobs:
           export ARCH=arm64
           export SUBARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
+          # Exact match for your kernel vermagic
           export LOCALVERSION=-android12-9-00016-g7c6bbcca33e1-ab12029497
           
-          # Force the config even with Kconfig warnings
-          make vendor/x6833b_defconfig || true 
+          # Force the config skip any missing KernelSU files
+          make vendor/x6833b_defconfig || true
           
-          # Only build the specific folder we need to avoid KernelSU errors elsewhere
+          # Target only the sound drivers folder to avoid main kernel errors
           make -j$(nproc) M=sound/drivers modules
           
       - name: Organize Artifact
