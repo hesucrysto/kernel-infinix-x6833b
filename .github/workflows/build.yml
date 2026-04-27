@@ -1,0 +1,29 @@
+name: Build Kernel Module
+on:
+  workflow_dispatch: # Allows you to start it manually
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout Source
+        uses: actions/checkout@v4
+
+      - name: Setup Build Environment
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y bc build-essential flex bison libssl-dev libelf-dev clang lld llvm
+
+      - name: Build snd-aloop Module
+        run: |
+          # Use the exact toolchain/arch for your Infinix
+          export ARCH=arm64
+          export CROSS_COMPILE=aarch64-linux-gnu-
+          make vendor/x6833b_defconfig # This uses your updated config
+          make -j$(nproc) modules SUBDIRS=drivers/alsa # Only builds the modules to save time
+
+      - name: Upload Result
+        uses: actions/upload-artifact@v4
+        with:
+          name: snd-aloop-driver
+          path: drivers/alsa/snd-aloop.ko
