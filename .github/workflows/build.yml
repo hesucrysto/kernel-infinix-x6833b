@@ -19,13 +19,16 @@ jobs:
           export ARCH=arm64
           export SUBARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
-          # Exact match for your kernel vermagic
           export LOCALVERSION=-android12-9-00016-g7c6bbcca33e1-ab12029497
           
-          # Force the config skip any missing KernelSU files
+          # 1. Initialize the config (The || true handles the Kconfig warnings)
           make vendor/x6833b_defconfig || true
           
-          # Target only the sound drivers folder to avoid main kernel errors
+          # 2. GENERATE MISSING HEADERS (This fixes your Error #4)
+          make prepare
+          make modules_prepare
+          
+          # 3. Build only the loopback module
           make -j$(nproc) M=sound/drivers modules
           
       - name: Organize Artifact
