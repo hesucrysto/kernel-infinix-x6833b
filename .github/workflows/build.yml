@@ -21,18 +21,16 @@ jobs:
           export CROSS_COMPILE=aarch64-linux-gnu-
           export LOCALVERSION=-android12-9-00016-g7c6bbcca33e1-ab12029497
           
-          # Manually move the config you edited
+          # 1. Force the config file into place
           cp arch/arm64/configs/defconfig .config
           
-          # Force it to accept the config even with SCSI/KernelSU warnings
-          make KCONFIG_NOSILENTUPDATE=1 olddefconfig || true
-          
-          # Prepare headers
+          # 2. This command creates the missing headers WITHOUT checking the broken Kconfigs
+          make silentoldconfig || true
           make prepare
           make modules_prepare
           
-          # Target only the sound drivers
-          make -j$(nproc) M=sound/drivers modules
+          # 3. Direct build of the loopback driver, ignoring main kernel errors
+          make -j$(nproc) M=sound/drivers CONFIG_SND_ALOOP=m modules
           
       - name: Organize Artifact
         run: |
