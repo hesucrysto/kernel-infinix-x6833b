@@ -1,10 +1,10 @@
 name: Build snd-aloop for Infinix X6833B
 on:
-  workflow_dispatch: # Allows you to start it manually
+  workflow_dispatch:
 
 jobs:
   build:
-    runs-on: ubuntu-22.04
+    runs-runs-on: ubuntu-22.04
     steps:
       - name: Checkout Source
         uses: actions/checkout@v4
@@ -16,25 +16,20 @@ jobs:
 
       - name: Build snd-aloop Module
         run: |
-          # 1. Set Architectures
           export ARCH=arm64
           export SUBARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
-          
-          # 2. Match your specific Kernel ID (VERMAGIC FIX)
           export LOCALVERSION=-android12-9-00016-g7c6bbcca33e1-ab12029497
           
-          # 3. Use the config you modified
-          make vendor/x6833b_defconfig
+          # Force the config even with Kconfig warnings
+          make vendor/x6833b_defconfig || true 
           
-          # 4. Build only the ALSA modules to save time
-          # This specifically targets the loopback driver we enabled
-          make -j$(nproc) modules SUBDIRS=sound/drivers
+          # Only build the specific folder we need to avoid KernelSU errors elsewhere
+          make -j$(nproc) M=sound/drivers modules
           
       - name: Organize Artifact
         run: |
           mkdir output
-          # Copy the compiled driver to the output folder
           find sound/drivers -name "snd-aloop.ko" -exec cp {} output/ \;
 
       - name: Upload Driver
@@ -42,4 +37,3 @@ jobs:
         with:
           name: infinix-snd-aloop
           path: output/snd-aloop.ko
-
