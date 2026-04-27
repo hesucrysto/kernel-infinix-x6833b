@@ -1,10 +1,10 @@
-name: Build Kernel Module
+name: Build snd-aloop for Infinix X6833B
 on:
   workflow_dispatch: # Allows you to start it manually
 
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - name: Checkout Source
         uses: actions/checkout@v4
@@ -12,18 +12,34 @@ jobs:
       - name: Setup Build Environment
         run: |
           sudo apt-get update
-          sudo apt-get install -y bc build-essential flex bison libssl-dev libelf-dev clang lld llvm
+          sudo apt-get install -y bc build-essential flex bison libssl-dev libelf-dev clang lld llvm libncurses-dev crossbuild-essential-arm64
 
       - name: Build snd-aloop Module
         run: |
-          # Use the exact toolchain/arch for your Infinix
+          # 1. Set Architectures
           export ARCH=arm64
+          export SUBARCH=arm64
           export CROSS_COMPILE=aarch64-linux-gnu-
-          make vendor/x6833b_defconfig # This uses your updated config
-          make -j$(nproc) modules SUBDIRS=drivers/alsa # Only builds the modules to save time
+          
+          # 2. Match your specific Kernel ID (VERMAGIC FIX)
+          export LOCALVERSION=-android12-9-00016-g7c6bbcca33e1-ab12029497
+          
+          # 3. Use the config you modified
+          make vendor/x6833b_defconfig
+          
+          # 4. Build only the ALSA modules to save time
+          # This specifically targets the loopback driver we enabled
+          make -j$(nproc) modules SUBDIRS=sound/drivers
+          
+      - name: Organize Artifact
+        run: |
+          mkdir output
+          # Copy the compiled driver to the output folder
+          find sound/drivers -name "snd-aloop.ko" -exec cp {} output/ \;
 
-      - name: Upload Result
+      - name: Upload Driver
         uses: actions/upload-artifact@v4
         with:
-          name: snd-aloop-driver
-          path: drivers/alsa/snd-aloop.ko
+          name: infinix-snd-aloop
+          path: output/snd-aloop.ko
+
